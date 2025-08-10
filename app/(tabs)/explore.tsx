@@ -1,110 +1,251 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Dimensions, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { GlassButton } from '@/components/GlassButton';
+import { GlassCard } from '@/components/GlassCard';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useColorScheme } from '@/hooks/useColorScheme';
+
+const { width } = Dimensions.get('window');
 
 export default function TabTwoScreen() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const handleFeaturePress = (feature: string) => {
+    console.log(`Feature pressed: ${feature}`);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Background Gradient */}
+      <LinearGradient
+        colors={isDark ? ['#020617', '#0B1426', '#1E3A8A', '#1E40AF'] : ['#0B1426', '#1E3A8A', '#3B82F6', '#60A5FA']}
+        style={styles.backgroundGradient}
+      />
+      
+      {/* Header Section */}
+      <View style={styles.header}>
+        <GlassCard intensity={20} style={styles.headerCard}>
+          <ThemedText style={styles.headerTitle}>Ocean Features</ThemedText>
+          <ThemedText style={styles.headerSubtitle}>Discover water management tools</ThemedText>
+        </GlassCard>
+      </View>
+
+      {/* Interactive Features Grid */}
+      <View style={styles.featuresGrid}>
+        <GlassCard intensity={25} style={styles.featureGridCard}>
+          <View style={styles.featureGridContent}>
+            <Ionicons name="water" size={32} color="#0EA5E9" />
+            <ThemedText style={styles.featureGridTitle}>Flow Control</ThemedText>
+            <ThemedText style={styles.featureGridDescription}>
+              Advanced water flow management
             </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+          </View>
+        </GlassCard>
+
+        <GlassCard intensity={25} style={styles.featureGridCard}>
+          <View style={styles.featureGridContent}>
+            <Ionicons name="thermometer" size={32} color="#10B981" />
+            <ThemedText style={styles.featureGridTitle}>Temperature</ThemedText>
+            <ThemedText style={styles.featureGridDescription}>
+              Precise temperature monitoring
+            </ThemedText>
+          </View>
+        </GlassCard>
+
+        <GlassCard intensity={25} style={styles.featureGridCard}>
+          <View style={styles.featureGridContent}>
+            <Ionicons name="analytics" size={32} color="#8B5CF6" />
+            <ThemedText style={styles.featureGridTitle}>Analytics</ThemedText>
+            <ThemedText style={styles.featureGridDescription}>
+              Real-time data analysis
+            </ThemedText>
+          </View>
+        </GlassCard>
+
+        <GlassCard intensity={25} style={styles.featureGridCard}>
+          <View style={styles.featureGridContent}>
+            <Ionicons name="shield-checkmark" size={32} color="#EF4444" />
+            <ThemedText style={styles.featureGridTitle}>Safety</ThemedText>
+            <ThemedText style={styles.featureGridDescription}>
+              Water quality protection
+            </ThemedText>
+          </View>
+        </GlassCard>
+      </View>
+
+      {/* Component Showcase */}
+      <View style={styles.showcaseContainer}>
+        <ThemedText style={styles.sectionTitle}>Water Management Tools</ThemedText>
+        
+        <GlassCard intensity={30} style={styles.showcaseCard}>
+          <View style={styles.showcaseHeader}>
+            <Ionicons name="water" size={24} color="#0EA5E9" />
+            <ThemedText style={styles.showcaseTitle}>Flow Monitoring System</ThemedText>
+          </View>
+          <ThemedText style={styles.showcaseDescription}>
+            Advanced water flow tracking with predictive analytics and automated alerts.
+          </ThemedText>
+          <View style={styles.codePreview}>
+            <ThemedText style={styles.codeText}>
+              {'<FlowMonitor\n  rate={1024}\n  unit="L/min"\n/>'}
+            </ThemedText>
+          </View>
+        </GlassCard>
+
+        <GlassCard intensity={30} style={styles.showcaseCard}>
+          <View style={styles.showcaseHeader}>
+            <Ionicons name="thermometer" size={24} color="#10B981" />
+            <ThemedText style={styles.showcaseTitle}>Temperature Control</ThemedText>
+          </View>
+          <ThemedText style={styles.showcaseDescription}>
+            Automated temperature regulation with precision monitoring and control systems.
+          </ThemedText>
+          <View style={styles.codePreview}>
+            <ThemedText style={styles.codeText}>
+              {'<TempControl\n  target={22}\n  unit="°C"\n/>'}
+            </ThemedText>
+          </View>
+        </GlassCard>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.actionsContainer}>
+        <GlassButton
+          title="View Analytics"
+          onPress={() => handleFeaturePress('analytics')}
+          icon="analytics"
+          style={styles.actionButton}
+        />
+        
+        <GlassButton
+          title="Control Panel"
+          onPress={() => handleFeaturePress('control')}
+          icon="settings"
+          style={styles.actionButton}
+        />
+      </View>
+
+      {/* Bottom Spacing */}
+      <View style={styles.bottomSpacing} />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
   },
-  titleContainer: {
+  backgroundGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  header: {
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+  },
+  headerCard: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#F1F5F9',
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    opacity: 0.8,
+    color: '#F1F5F9',
+  },
+  featuresGrid: {
     flexDirection: 'row',
-    gap: 8,
+    flexWrap: 'wrap',
+    paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 30,
+  },
+  featureGridCard: {
+    width: (width - 52) / 2,
+    padding: 16,
+  },
+  featureGridContent: {
+    alignItems: 'center',
+  },
+  featureGridTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 12,
+    marginBottom: 4,
+    textAlign: 'center',
+    color: '#F1F5F9',
+  },
+  featureGridDescription: {
+    fontSize: 12,
+    opacity: 0.7,
+    textAlign: 'center',
+    lineHeight: 16,
+    color: '#F1F5F9',
+  },
+  showcaseContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#F1F5F9',
+  },
+  showcaseCard: {
+    marginBottom: 16,
+    padding: 20,
+  },
+  showcaseHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  showcaseTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: 12,
+    color: '#F1F5F9',
+  },
+  showcaseDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    opacity: 0.8,
+    marginBottom: 16,
+    color: '#F1F5F9',
+  },
+  codePreview: {
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 8,
+    padding: 12,
+  },
+  codeText: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 12,
+    color: '#F1F5F9',
+  },
+  actionsContainer: {
+    paddingHorizontal: 20,
+    gap: 12,
+    alignItems: 'center',
+  },
+  actionButton: {
+    minWidth: 200,
+  },
+  bottomSpacing: {
+    height: 40,
   },
 });
