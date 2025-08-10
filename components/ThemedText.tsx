@@ -14,18 +14,31 @@ export function ThemedText({
   darkColor,
   type = 'default',
   ...rest
-}: ThemedTextProps) {
+}: ThemedTextProps): React.ReactNode {
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+
+  const getTypeStyle = (textType: string) => {
+    switch (textType) {
+      case 'default':
+        return styles.default;
+      case 'title':
+        return styles.title;
+      case 'defaultSemiBold':
+        return styles.defaultSemiBold;
+      case 'subtitle':
+        return styles.subtitle;
+      case 'link':
+        return styles.link;
+      default:
+        return styles.default;
+    }
+  };
 
   return (
     <Text
       style={[
         { color },
-        type === 'default' ? styles.default : undefined,
-        type === 'title' ? styles.title : undefined,
-        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
-        type === 'link' ? styles.link : undefined,
+        getTypeStyle(type ?? 'default'),
         style,
       ]}
       {...rest}

@@ -5,11 +5,17 @@ import { StyleSheet } from 'react-native';
 export default function BlurTabBarBackground() {
   return (
     <BlurView
-      // System chrome material automatically adapts to the system's theme
-      // and matches the native tab bar appearance on iOS.
+      // True glassmorphism with strong blur and transparency
       tint="systemChromeMaterial"
-      intensity={100}
-      style={StyleSheet.absoluteFill}
+      intensity={120}
+      style={[
+        StyleSheet.absoluteFill, 
+        { 
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          borderTopWidth: 1,
+          borderTopColor: 'rgba(255, 255, 255, 0.2)',
+        }
+      ]}
     />
   );
 }
