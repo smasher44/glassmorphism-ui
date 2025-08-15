@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GlassButton } from '@/components/GlassButton';
@@ -11,11 +12,11 @@ const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
   const isDark = colorScheme === 'dark';
 
   const handleGetStarted = () => {
-    // Handle get started action
-    console.log('Get Started pressed');
+    router.push('/launch-control');
   };
 
   return (
