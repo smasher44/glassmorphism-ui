@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -10,15 +11,22 @@ import Animated, {
 
 import { ThemedText } from '@/components/ThemedText';
 
-export function HelloWave() {
+export const HelloWave = memo((): ReactNode => {
   const rotationAnimation = useSharedValue(0);
 
-  useEffect(() => {
+  const startAnimation = useCallback(() => {
     rotationAnimation.value = withRepeat(
-      withSequence(withTiming(25, { duration: 150 }), withTiming(0, { duration: 150 })),
+      withSequence(
+        withTiming(25, { duration: 150 }), 
+        withTiming(0, { duration: 150 })
+      ),
       4 // Run the animation 4 times
     );
   }, [rotationAnimation]);
+
+  useEffect(() => {
+    startAnimation();
+  }, [startAnimation]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotationAnimation.value}deg` }],
@@ -29,7 +37,9 @@ export function HelloWave() {
       <ThemedText style={styles.text}>👋</ThemedText>
     </Animated.View>
   );
-}
+});
+
+HelloWave.displayName = 'HelloWave';
 
 const styles = StyleSheet.create({
   text: {
