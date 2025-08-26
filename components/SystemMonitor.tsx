@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Animated, Dimensions, StyleSheet, View } from 'react-native';
 
 import { GlassCard } from '@/components/GlassCard';
@@ -25,13 +26,52 @@ interface SystemMonitorProps {
   style?: any;
 }
 
-export const SystemMonitor: React.FC<SystemMonitorProps> = ({
+export const SystemMonitor = memo(({
   metrics,
   intensity = 25,
   style,
-}) => {
+}: SystemMonitorProps): ReactNode => {
   const pulseAnimations = useRef<{ [key: string]: Animated.Value }>({}).current;
   const valueAnimations = useRef<{ [key: string]: Animated.Value }>({}).current;
+
+  const getMetricStatus = useCallback((metric: SystemMetric): 'normal' | 'warning' | 'critical' => {
+    const percentage = (metric.value - metric.minValue) / (metric.maxValue - metric.minValue);
+    if (percentage < 0.2 || percentage > 0.8) return 'critical';
+    if (percentage < 0.3 || percentage > 0.7) return 'warning';
+    return 'normal';
+  }, []);
+
+  const getStatusColor = useCallback((status: 'normal' | 'warning' | 'critical'): string => {
+    switch (status) {
+      case 'normal':
+        return '#10B981';
+      case 'warning':
+        return '#F59E0B';
+      case 'critical':
+        return '#EF4444';
+    }
+  }, []);
+
+  const getStatusIcon = useCallback((status: 'normal' | 'warning' | 'critical'): keyof typeof Ionicons.glyphMap => {
+    switch (status) {
+      case 'normal':
+        return 'checkmark-circle';
+      case 'warning':
+        return 'warning';
+      case 'critical':
+        return 'alert-circle';
+    }
+  }, []);
+
+  const systemHealthStats = useMemo(() => {
+    const normalCount = metrics.filter((m) => getMetricStatus(m) === 'normal').length;
+    const warningCount = metrics.filter((m) => getMetricStatus(m) === 'warning').length;
+    const criticalCount = metrics.filter((m) => getMetricStatus(m) === 'critical').length;
+    
+    return { normalCount, warningCount, criticalCount };
+  }, [metrics, getMetricStatus]);
+
+  const containerStyle = useMemo(() => [styles.container, style], [style]);
 
   useEffect(() => {
     // Initialize animations for each metric
@@ -84,106 +124,80 @@ export const SystemMonitor: React.FC<SystemMonitorProps> = ({
     };
   }, [metrics, pulseAnimations, valueAnimations]);
 
-  const getMetricStatus = (metric: SystemMetric): 'normal' | 'warning' | 'critical' => {
-    const percentage = (metric.value - metric.minValue) / (metric.maxValue - metric.minValue);
-    if (percentage < 0.2 || percentage > 0.8) return 'critical';
-    if (percentage < 0.3 || percentage > 0.7) return 'warning';
-    return 'normal';
-  };
+  const renderMetric = useCallback((metric: SystemMetric) => {
+    const status = getMetricStatus(metric);
+    const statusColor = getStatusColor(status);
+    const statusIcon = getStatusIcon(status);
+    const isCritical = metric.isCritical;
+    const progressPercentage = ((metric.value - metric.minValue) / (metric.maxValue - metric.minValue)) * 100;
 
-  const getStatusColor = (status: 'normal' | 'warning' | 'critical'): string => {
-    switch (status) {
-      case 'normal':
-        return '#10B981';
-      case 'warning':
-        return '#F59E0B';
-      case 'critical':
-        return '#EF4444';
-    }
-  };
+    const iconContainerStyle = useMemo(() => [
+      styles.iconContainer,
+      {
+        backgroundColor: `${metric.color}20`,
+        transform: [
+          {
+            scale: isCritical
+              ? pulseAnimations[metric.id] ?? 1
+              : 1,
+          },
+        ],
+      },
+    ], [metric.color, isCritical, pulseAnimations, metric.id]);
 
-  const getStatusIcon = (status: 'normal' | 'warning' | 'critical'): keyof typeof Ionicons.glyphMap => {
-    switch (status) {
-      case 'normal':
-        return 'checkmark-circle';
-      case 'warning':
-        return 'warning';
-      case 'critical':
-        return 'alert-circle';
-    }
-  };
+    const progressFillStyle = useMemo(() => [
+      styles.progressFill,
+      {
+        width: `${progressPercentage}%`,
+        backgroundColor: statusColor,
+      },
+    ], [progressPercentage, statusColor]);
+
+    return (
+      <View key={metric.id} style={styles.metricCard}>
+        <View style={styles.metricHeader}>
+          <Animated.View style={iconContainerStyle}>
+            <Ionicons name={metric.icon} size={20} color={metric.color} />
+          </Animated.View>
+          <View style={styles.statusIndicator}>
+            <Ionicons name={statusIcon} size={16} color={statusColor} />
+          </View>
+        </View>
+
+        <View style={styles.metricContent}>
+          <Animated.Text style={styles.metricValue}>
+            {valueAnimations[metric.id]?.interpolate({
+              inputRange: [0, metric.value],
+              outputRange: ['0', metric.value.toString()],
+            }) ?? metric.value}
+          </Animated.Text>
+          <ThemedText style={styles.metricUnit}>{metric.unit}</ThemedText>
+          <ThemedText style={styles.metricLabel}>{metric.label}</ThemedText>
+        </View>
+
+        {/* Progress bar */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBackground}>
+            <View style={progressFillStyle} />
+          </View>
+          <View style={styles.progressLabels}>
+            <ThemedText style={styles.progressMin}>{metric.minValue}</ThemedText>
+            <ThemedText style={styles.progressMax}>{metric.maxValue}</ThemedText>
+          </View>
+        </View>
+      </View>
+    );
+  }, [getMetricStatus, getStatusColor, getStatusIcon, pulseAnimations, valueAnimations]);
 
   return (
-    <GlassCard intensity={intensity} style={[styles.container, style]}>
+    <GlassCard intensity={intensity} style={containerStyle}>
       <View style={styles.header}>
         <Ionicons name="pulse" size={24} color="#EF4444" />
         <ThemedText style={styles.title}>Real-time System Monitor</ThemedText>
       </View>
 
       <View style={styles.metricsGrid}>
-        {metrics.map((metric) => {
-          const status = getMetricStatus(metric);
-          const statusColor = getStatusColor(status);
-          const statusIcon = getStatusIcon(status);
-          const isCritical = metric.isCritical;
-
-          return (
-            <View key={metric.id} style={styles.metricCard}>
-              <View style={styles.metricHeader}>
-                <Animated.View
-                  style={[
-                    styles.iconContainer,
-                    {
-                      backgroundColor: `${metric.color}20`,
-                      transform: [
-                        {
-                          scale: isCritical
-                            ? pulseAnimations[metric.id] || 1
-                            : 1,
-                        },
-                      ],
-                    },
-                  ]}
-                >
-                  <Ionicons name={metric.icon} size={20} color={metric.color} />
-                </Animated.View>
-                <View style={styles.statusIndicator}>
-                  <Ionicons name={statusIcon} size={16} color={statusColor} />
-                </View>
-              </View>
-
-              <View style={styles.metricContent}>
-                <Animated.Text style={styles.metricValue}>
-                  {valueAnimations[metric.id]?.interpolate({
-                    inputRange: [0, metric.value],
-                    outputRange: ['0', metric.value.toString()],
-                  }) || metric.value}
-                </Animated.Text>
-                <ThemedText style={styles.metricUnit}>{metric.unit}</ThemedText>
-                <ThemedText style={styles.metricLabel}>{metric.label}</ThemedText>
-              </View>
-
-              {/* Progress bar */}
-              <View style={styles.progressContainer}>
-                <View style={styles.progressBackground}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${((metric.value - metric.minValue) / (metric.maxValue - metric.minValue)) * 100}%`,
-                        backgroundColor: statusColor,
-                      },
-                    ]}
-                  />
-                </View>
-                <View style={styles.progressLabels}>
-                  <ThemedText style={styles.progressMin}>{metric.minValue}</ThemedText>
-                  <ThemedText style={styles.progressMax}>{metric.maxValue}</ThemedText>
-                </View>
-              </View>
-            </View>
-          );
-        })}
+        {metrics.map(renderMetric)}
       </View>
 
       {/* System Status Summary */}
@@ -195,19 +209,19 @@ export const SystemMonitor: React.FC<SystemMonitorProps> = ({
         <View style={styles.summaryStats}>
           <View style={styles.summaryStat}>
             <ThemedText style={styles.summaryNumber}>
-              {metrics.filter((m) => getMetricStatus(m) === 'normal').length}
+              {systemHealthStats.normalCount}
             </ThemedText>
             <ThemedText style={styles.summaryLabel}>Normal</ThemedText>
           </View>
           <View style={styles.summaryStat}>
             <ThemedText style={styles.summaryNumber}>
-              {metrics.filter((m) => getMetricStatus(m) === 'warning').length}
+              {systemHealthStats.warningCount}
             </ThemedText>
             <ThemedText style={styles.summaryLabel}>Warning</ThemedText>
           </View>
           <View style={styles.summaryStat}>
             <ThemedText style={styles.summaryNumber}>
-              {metrics.filter((m) => getMetricStatus(m) === 'critical').length}
+              {systemHealthStats.criticalCount}
             </ThemedText>
             <ThemedText style={styles.summaryLabel}>Critical</ThemedText>
           </View>
@@ -215,7 +229,9 @@ export const SystemMonitor: React.FC<SystemMonitorProps> = ({
       </View>
     </GlassCard>
   );
-};
+});
+
+SystemMonitor.displayName = 'SystemMonitor';
 
 const styles = StyleSheet.create({
   container: {
