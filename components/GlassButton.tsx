@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import React from 'react';
+import type { ReactNode } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 
 interface GlassButtonProps {
@@ -13,7 +14,7 @@ interface GlassButtonProps {
   disabled?: boolean;
 }
 
-export const GlassButton: React.FC<GlassButtonProps> = ({
+export const GlassButton = memo(({
   title,
   onPress,
   icon,
@@ -21,29 +22,49 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
   style,
   intensity = 40,
   disabled = false,
-}): React.ReactNode => {
-  const handlePress = React.useCallback(() => {
+}: GlassButtonProps): ReactNode => {
+  const handlePress = useCallback(() => {
     if (!disabled) {
       onPress?.();
     }
   }, [onPress, disabled]);
 
+  const buttonContainerStyle = useMemo(() => [
+    styles.buttonContainer, 
+    style
+  ], [style]);
+
+  const buttonTextStyle = useMemo(() => [
+    styles.buttonText, 
+    disabled && styles.disabledText
+  ], [disabled]);
+
+  const buttonContentStyle = useMemo(() => [
+    styles.buttonContent,
+    { gap: icon ? 8 : 0 }
+  ], [icon]);
+
+  const blurIntensity = useMemo(() => intensity ?? 40, [intensity]);
+  const finalIconColor = useMemo(() => iconColor ?? '#0EA5E9', [iconColor]);
+
   return (
     <TouchableOpacity
       onPress={handlePress}
       disabled={disabled}
-      style={[styles.buttonContainer, style]}
+      style={buttonContainerStyle}
       activeOpacity={0.8}
     >
-      <BlurView intensity={intensity ?? 40} style={styles.glassButton}>
-        <View style={styles.buttonContent}>
-          {icon && <Ionicons name={icon} size={20} color={iconColor ?? '#0EA5E9'} />}
-          <Text style={[styles.buttonText, disabled && styles.disabledText]}>{title}</Text>
+      <BlurView intensity={blurIntensity} style={styles.glassButton}>
+        <View style={buttonContentStyle}>
+          {icon && <Ionicons name={icon} size={20} color={finalIconColor} />}
+          <Text style={buttonTextStyle}>{title}</Text>
         </View>
       </BlurView>
     </TouchableOpacity>
   );
-};
+});
+
+GlassButton.displayName = 'GlassButton';
 
 const styles = StyleSheet.create({
   buttonContainer: {
