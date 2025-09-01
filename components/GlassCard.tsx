@@ -1,28 +1,39 @@
 import { BlurView } from 'expo-blur';
-import React from 'react';
+import type { ReactNode } from 'react';
+import React, { memo, useMemo } from 'react';
 import { StyleSheet, ViewStyle } from 'react-native';
 
 interface GlassCardProps {
-  children: React.ReactNode;
+  children: ReactNode;
   intensity?: number;
   style?: ViewStyle;
   padding?: number;
   borderRadius?: number;
 }
 
-export const GlassCard: React.FC<GlassCardProps> = ({
+export const GlassCard = memo(({
   children,
   intensity = 25,
   style,
   padding = 16,
   borderRadius = 16,
-}): React.ReactNode => {
+}: GlassCardProps): ReactNode => {
+  const cardStyle = useMemo(() => [
+    styles.glassCard, 
+    { padding, borderRadius }, 
+    style
+  ], [padding, borderRadius, style]);
+
+  const blurIntensity = useMemo(() => intensity ?? 25, [intensity]);
+
   return (
-    <BlurView intensity={intensity ?? 25} style={[styles.glassCard, { padding, borderRadius }, style]}>
+    <BlurView intensity={blurIntensity} style={cardStyle}>
       {children}
     </BlurView>
   );
-};
+});
+
+GlassCard.displayName = 'GlassCard';
 
 const styles = StyleSheet.create({
   glassCard: {
