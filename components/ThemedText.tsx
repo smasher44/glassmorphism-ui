@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -8,16 +10,16 @@ export type ThemedTextProps = TextProps & {
   type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
 };
 
-export function ThemedText({
+export const ThemedText = memo(({
   style,
   lightColor,
   darkColor,
   type = 'default',
   ...rest
-}: ThemedTextProps): React.ReactNode {
+}: ThemedTextProps): ReactNode => {
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
 
-  const getTypeStyle = (textType: string) => {
+  const getTypeStyle = useCallback((textType: string) => {
     switch (textType) {
       case 'default':
         return styles.default;
@@ -32,19 +34,23 @@ export function ThemedText({
       default:
         return styles.default;
     }
-  };
+  }, []);
+
+  const textStyle = useMemo(() => [
+    { color },
+    getTypeStyle(type ?? 'default'),
+    style,
+  ], [color, getTypeStyle, type, style]);
 
   return (
     <Text
-      style={[
-        { color },
-        getTypeStyle(type ?? 'default'),
-        style,
-      ]}
+      style={textStyle}
       {...rest}
     />
   );
-}
+});
+
+ThemedText.displayName = 'ThemedText';
 
 const styles = StyleSheet.create({
   default: {
