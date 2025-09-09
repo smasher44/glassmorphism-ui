@@ -31,8 +31,11 @@ export const SystemMonitor = memo(({
   intensity = 25,
   style,
 }: SystemMonitorProps): ReactNode => {
-  const pulseAnimations = useRef<{ [key: string]: Animated.Value }>({}).current;
-  const valueAnimations = useRef<{ [key: string]: Animated.Value }>({}).current;
+  const pulseAnimationsRef = useRef<{ [key: string]: Animated.Value }>({});
+  const valueAnimationsRef = useRef<{ [key: string]: Animated.Value }>({});
+  
+  const pulseAnimations = pulseAnimationsRef.current;
+  const valueAnimations = valueAnimationsRef.current;
 
   const getMetricStatus = useCallback((metric: SystemMetric): 'normal' | 'warning' | 'critical' => {
     const percentage = (metric.value - metric.minValue) / (metric.maxValue - metric.minValue);
@@ -71,7 +74,7 @@ export const SystemMonitor = memo(({
     return { normalCount, warningCount, criticalCount };
   }, [metrics, getMetricStatus]);
 
-  const containerStyle = useMemo(() => [styles.container, style], [style]);
+  const containerStyle = useMemo(() => [styles.container, style] as any, [style]);
 
   useEffect(() => {
     // Initialize animations for each metric
@@ -131,7 +134,7 @@ export const SystemMonitor = memo(({
     const isCritical = metric.isCritical;
     const progressPercentage = ((metric.value - metric.minValue) / (metric.maxValue - metric.minValue)) * 100;
 
-    const iconContainerStyle = useMemo(() => [
+    const iconContainerStyle = [
       styles.iconContainer,
       {
         backgroundColor: `${metric.color}20`,
@@ -143,15 +146,15 @@ export const SystemMonitor = memo(({
           },
         ],
       },
-    ], [metric.color, isCritical, pulseAnimations, metric.id]);
+    ];
 
-    const progressFillStyle = useMemo(() => [
+    const progressFillStyle = [
       styles.progressFill,
       {
-        width: `${progressPercentage}%`,
+        width: `${progressPercentage}%` as any,
         backgroundColor: statusColor,
       },
-    ], [progressPercentage, statusColor]);
+    ];
 
     return (
       <View key={metric.id} style={styles.metricCard}>
