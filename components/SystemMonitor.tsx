@@ -24,12 +24,14 @@ interface SystemMonitorProps {
   metrics: SystemMetric[];
   intensity?: number;
   style?: any;
+  className?: string;
 }
 
 export const SystemMonitor = memo(({
   metrics,
   intensity = 25,
   style,
+  className,
 }: SystemMonitorProps): ReactNode => {
   const pulseAnimationsRef = useRef<{ [key: string]: Animated.Value }>({});
   const valueAnimationsRef = useRef<{ [key: string]: Animated.Value }>({});
@@ -38,7 +40,10 @@ export const SystemMonitor = memo(({
   const valueAnimations = valueAnimationsRef.current;
 
   const getMetricStatus = useCallback((metric: SystemMetric): 'normal' | 'warning' | 'critical' => {
-    const percentage = (metric.value - metric.minValue) / (metric.maxValue - metric.minValue);
+    const range = metric.maxValue - metric.minValue;
+    if (range === 0) return 'normal';
+    
+    const percentage = (metric.value - metric.minValue) / range;
     if (percentage < 0.2 || percentage > 0.8) return 'critical';
     if (percentage < 0.3 || percentage > 0.7) return 'warning';
     return 'normal';
@@ -67,14 +72,34 @@ export const SystemMonitor = memo(({
   }, []);
 
   const systemHealthStats = useMemo(() => {
-    const normalCount = metrics.filter((m) => getMetricStatus(m) === 'normal').length;
-    const warningCount = metrics.filter((m) => getMetricStatus(m) === 'warning').length;
-    const criticalCount = metrics.filter((m) => getMetricStatus(m) === 'critical').length;
+    let normalCount = 0;
+    let warningCount = 0;
+    let criticalCount = 0;
+    
+    for (const metric of metrics) {
+      const status = getMetricStatus(metric);
+      switch (status) {
+        case 'normal':
+          normalCount++;
+          break;
+        case 'warning':
+          warningCount++;
+          break;
+        case 'critical':
+          criticalCount++;
+          break;
+      }
+    }
     
     return { normalCount, warningCount, criticalCount };
   }, [metrics, getMetricStatus]);
 
-  const containerStyle = useMemo(() => [styles.container, style] as any, [style]);
+  const containerStyle = useMemo(() => {
+    if (className) {
+      return className;
+    }
+    return [styles.container, style] as any;
+  }, [style, className]);
 
   useEffect(() => {
     // Initialize animations for each metric
@@ -89,31 +114,37 @@ export const SystemMonitor = memo(({
     const startPulseAnimations = () => {
       const criticalMetrics = metrics.filter((m) => m.isCritical);
       criticalMetrics.forEach((metric) => {
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(pulseAnimations[metric.id], {
-              toValue: 1.2,
-              duration: 1000,
-              useNativeDriver: true,
-            }),
-            Animated.timing(pulseAnimations[metric.id], {
-              toValue: 1,
-              duration: 1000,
-              useNativeDriver: true,
-            }),
-          ])
-        ).start();
+        const animation = pulseAnimations[metric.id];
+        if (animation) {
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(animation, {
+                toValue: 1.2,
+                duration: 1000,
+                useNativeDriver: true,
+              }),
+              Animated.timing(animation, {
+                toValue: 1,
+                duration: 1000,
+                useNativeDriver: true,
+              }),
+            ])
+          ).start();
+        }
       });
     };
 
     // Start value count-up animations
     const startValueAnimations = () => {
       metrics.forEach((metric) => {
-        Animated.timing(valueAnimations[metric.id], {
-          toValue: metric.value,
-          duration: 2000,
-          useNativeDriver: false,
-        }).start();
+        const animation = valueAnimations[metric.id];
+        if (animation) {
+          Animated.timing(animation, {
+            toValue: metric.value,
+            duration: 2000,
+            useNativeDriver: false,
+          }).start();
+        }
       });
     };
 
@@ -122,8 +153,8 @@ export const SystemMonitor = memo(({
 
     return () => {
       // Cleanup animations
-      Object.values(pulseAnimations).forEach((anim) => anim.stopAnimation());
-      Object.values(valueAnimations).forEach((anim) => anim.stopAnimation());
+      Object.values(pulseAnimations).forEach((anim) => anim?.stopAnimation());
+      Object.values(valueAnimations).forEach((anim) => anim?.stopAnimation());
     };
   }, [metrics, pulseAnimations, valueAnimations]);
 
@@ -132,7 +163,8 @@ export const SystemMonitor = memo(({
     const statusColor = getStatusColor(status);
     const statusIcon = getStatusIcon(status);
     const isCritical = metric.isCritical;
-    const progressPercentage = ((metric.value - metric.minValue) / (metric.maxValue - metric.minValue)) * 100;
+    const range = metric.maxValue - metric.minValue;
+    const progressPercentage = range > 0 ? ((metric.value - metric.minValue) / range) * 100 : 0;
 
     const iconContainerStyle = [
       styles.iconContainer,
@@ -174,8 +206,8 @@ export const SystemMonitor = memo(({
               outputRange: ['0', metric.value.toString()],
             }) ?? metric.value}
           </Animated.Text>
-          <ThemedText style={styles.metricUnit}>{metric.unit}</ThemedText>
-          <ThemedText style={styles.metricLabel}>{metric.label}</ThemedText>
+          <ThemedText style={styles.metricUnit}>{metric.unit ?? ''}</ThemedText>
+          <ThemedText style={styles.metricLabel}>{metric.label ?? ''}</ThemedText>
         </View>
 
         {/* Progress bar */}
@@ -184,8 +216,8 @@ export const SystemMonitor = memo(({
             <View style={progressFillStyle} />
           </View>
           <View style={styles.progressLabels}>
-            <ThemedText style={styles.progressMin}>{metric.minValue}</ThemedText>
-            <ThemedText style={styles.progressMax}>{metric.maxValue}</ThemedText>
+            <ThemedText style={styles.progressMin}>{metric.minValue ?? 0}</ThemedText>
+            <ThemedText style={styles.progressMax}>{metric.maxValue ?? 100}</ThemedText>
           </View>
         </View>
       </View>
@@ -200,7 +232,7 @@ export const SystemMonitor = memo(({
       </View>
 
       <View style={styles.metricsGrid}>
-        {metrics.map(renderMetric)}
+        {metrics?.map(renderMetric) ?? []}
       </View>
 
       {/* System Status Summary */}
@@ -212,19 +244,19 @@ export const SystemMonitor = memo(({
         <View style={styles.summaryStats}>
           <View style={styles.summaryStat}>
             <ThemedText style={styles.summaryNumber}>
-              {systemHealthStats.normalCount}
+              {systemHealthStats?.normalCount ?? 0}
             </ThemedText>
             <ThemedText style={styles.summaryLabel}>Normal</ThemedText>
           </View>
           <View style={styles.summaryStat}>
             <ThemedText style={styles.summaryNumber}>
-              {systemHealthStats.warningCount}
+              {systemHealthStats?.warningCount ?? 0}
             </ThemedText>
             <ThemedText style={styles.summaryLabel}>Warning</ThemedText>
           </View>
           <View style={styles.summaryStat}>
             <ThemedText style={styles.summaryNumber}>
-              {systemHealthStats.criticalCount}
+              {systemHealthStats?.criticalCount ?? 0}
             </ThemedText>
             <ThemedText style={styles.summaryLabel}>Critical</ThemedText>
           </View>
